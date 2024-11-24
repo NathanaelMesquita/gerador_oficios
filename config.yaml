@@ -1,0 +1,15 @@
+credentials:
+  usernames:
+    admin:
+      email: usuario1@example.com
+      name: master
+      password: $2b$12$92FYmNr9mOK6Gpa7iT80JeV.ox1QUgV1pmcvX/fZGSIQU7Uv.FC0u
+    usuario2:
+      email: usuario2@example.com
+      name: Usuario Dois
+      password: $2b$12$wAd5f9...
+
+cookie:
+  expiry_days: 7
+  name: rif_report
+  key: rif_report_cookie_1
