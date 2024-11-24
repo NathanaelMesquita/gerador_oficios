@@ -62,10 +62,10 @@ nome_delegado = st.text_input("Nome do Delegado", "Delegado Exemplo")
 nome_delegacia = st.text_input("Nome da Delegacia", "Delegacia Exemplo")
 
 #preenchimentos automáticos:
-try:
+'''try:
     locale.setlocale(locale.LC_TIME, "pt_BR.UTF-8")  # Para sistemas Unix/Linux
 except locale.Error:
-    locale.setlocale(locale.LC_TIME, "Portuguese_Brazil.1252")  # Para Windows
+    locale.setlocale(locale.LC_TIME, "Portuguese_Brazil.1252")  # Para Windows'''
 
 # Data atual formatada
 data_atual = datetime.now()
