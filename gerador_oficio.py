@@ -3,7 +3,6 @@ import os
 from docx import Document
 import streamlit as st
 from datetime import datetime
-import locale
 
 # Caminho do modelo
 TEMPLATE_PATH = "modelo.docx"
