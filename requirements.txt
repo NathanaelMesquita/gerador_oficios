@@ -1,0 +1,9 @@
+streamlit
+pandas
+openpyxl
+bcrypt
+pyyaml
+PyPDF2
+reportlab
+gitpython
+python-docx
