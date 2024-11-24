@@ -1,4 +1,4 @@
-import pythoncom
+import pypandoc
 from docx2pdf import convert
 import os
 from docx import Document
@@ -19,14 +19,10 @@ def preencher_modelo(template_path, context, output_path):
     doc.save(output_path)
 
 def gerar_pdf(docx_path, pdf_path):
-    """Converte o DOCX para PDF utilizando docx2pdf com inicialização do COM."""
-    # Inicializar COM
-    pythoncom.CoInitialize()
-    try:
-        convert(docx_path, pdf_path)
-    finally:
-        # Finalizar COM
-        pythoncom.CoUninitialize()
+    """Converte o DOCX para PDF usando pypandoc (em plataformas não-Windows)."""
+    output = pypandoc.convert_file(docx_path, 'pdf', outputfile=pdf_path)
+    assert output == ""
+    print(f"PDF gerado em: {pdf_path}")
 
 def gerar_oficio(context):
     """Preenche o modelo DOCX, converte para PDF e oferece download."""
