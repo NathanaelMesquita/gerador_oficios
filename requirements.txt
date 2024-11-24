@@ -8,6 +8,5 @@ reportlab
 gitpython
 python-docx
 pypandoc
-docx
-locale
 docx2pdf
+docx
