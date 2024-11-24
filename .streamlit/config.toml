@@ -1,0 +1,7 @@
+[theme]
+base = "dark"                   # Tema escuro como base
+primaryColor = "#1E90FF"        # Azul médio para botões e links
+backgroundColor = "#000000"     # Fundo preto
+secondaryBackgroundColor = "#333333" # Fundo cinza-escuro para widgets
+textColor = "#87CEEB"           # Azul claro para o texto
+font = "serif"                  # Fonte com serifa (similar à Times New Roman)
