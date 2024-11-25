@@ -12,12 +12,20 @@ MODELOS = {
 def preencher_modelo(template_path, context, output_path):
     """
     Preenche o modelo DOCX substituindo os placeholders pelos valores fornecidos.
+    Formata identificadores como listas alinhadas.
     """
     doc = Document(template_path)
     for paragraph in doc.paragraphs:
         for key, value in context.items():
             if f"{{{key}}}" in paragraph.text:
-                paragraph.text = paragraph.text.replace(f"{{{key}}}", value)
+                if isinstance(value, list):  # Para listas, formatar como itens alinhados
+                    paragraph.text = paragraph.text.replace(f"{{{key}}}", "")
+                    for item in value:
+                        # Adicionar cada item da lista em uma nova linha com indentação
+                        p = paragraph.insert_paragraph_before(f"  - {item.strip()}")
+                        p.style = paragraph.style  # Manter o estilo do parágrafo original
+                else:
+                    paragraph.text = paragraph.text.replace(f"{{{key}}}", value)
 
     # Verificar também placeholders em tabelas
     for table in doc.tables:
@@ -25,24 +33,30 @@ def preencher_modelo(template_path, context, output_path):
             for cell in row.cells:
                 for key, value in context.items():
                     if f"{{{key}}}" in cell.text:
-                        cell.text = cell.text.replace(f"{{{key}}}", value)
+                        if isinstance(value, list):  # Formatar listas dentro de tabelas
+                            cell.text = cell.text.replace(f"{{{key}}}", "")
+                            for item in value:
+                                cell.add_paragraph(f"  - {item.strip()}")
+                        else:
+                            cell.text = cell.text.replace(f"{{{key}}}", value)
 
     doc.save(output_path)
 
 def gerar_oficios(context, numeros_oficio, identificadores_selecionados, valores_identificadores):
     """
-    Gera ofícios para as operadoras com base nos identificadores selecionados.
+    Gera ofícios para cada operadora com base nos identificadores selecionados.
     """
     operadoras = ["Vivo", "Claro", "TIM"]
     arquivos_oficios = []
 
     for identificador, valores in zip(identificadores_selecionados, valores_identificadores):
         modelo_path = MODELOS[identificador]  # Seleciona o modelo correto
-        context[identificador] = "\n".join([f"  - {v.strip()}" for v in valores if v.strip()])  # Preenche o placeholder do identificador
+        context["tipo_identificador"] = identificador  # Exemplo: CPF, IMEI ou TERMINAL
+        context[identificador] = valores  # Passa a lista de valores diretamente para o contexto
 
         for operadora, numero_oficio in zip(operadoras, numeros_oficio):
-            # Atualizar contexto com operadora e número do ofício correspondente
-            context["operadora"] = operadora
+            # Atualizar contexto com operadora e número do ofício
+            context["OPERADORA"] = operadora
             context["numero_oficio"] = numero_oficio
 
             # Caminho para salvar o DOCX preenchido
@@ -80,7 +94,7 @@ for identificador in identificadores_selecionados:
 
 # Data atual formatada
 data_atual = datetime.now()
-data_formatada = data_atual.strftime("%d de %B de %Y")
+data_formatada = data_atual.strftime("%d/%m/%Y")
 
 # Armazenar caminhos para exibição persistente dos botões de download
 if "arquivos_gerados" not in st.session_state:
@@ -91,7 +105,7 @@ if st.button("Gerar Ofícios"):
     # Criar o contexto para substituição
     context = {
         "ano_atual": str(ano_atual),
-        "data_atual": data_atual.strftime("%d de %B de %Y"),
+        "data_atual": data_atual.strftime("%d/%m/%Y"),
         "IP/VPI": tipo_referencia,
         "numero_ip_vpi": numero_referencia,
         "ano_ip_vpi": ano_referencia,
