@@ -2,8 +2,12 @@ from docx import Document
 import streamlit as st
 from datetime import datetime
 
-# Caminho do modelo
-TEMPLATE_PATH = "modelo.docx"
+# Modelos de ofício
+MODELOS = {
+    "CPF": "modelo_cpf.docx",
+    "IMEI": "modelo_imei.docx",
+    "TERMINAL": "modelo_terminal.docx"
+}
 
 def preencher_modelo(template_path, context, output_path):
     """
@@ -25,27 +29,31 @@ def preencher_modelo(template_path, context, output_path):
 
     doc.save(output_path)
 
-def gerar_oficios(context, numeros_oficio):
+def gerar_oficios(context, numeros_oficio, identificadores_selecionados, valores_identificadores):
     """
-    Gera três ofícios, um para cada operadora, e retorna os caminhos dos arquivos gerados.
+    Gera ofícios para as operadoras com base nos identificadores selecionados.
     """
     operadoras = ["Vivo", "Claro", "TIM"]
     arquivos_oficios = []
 
-    for operadora, numero_oficio in zip(operadoras, numeros_oficio):
-        # Atualizar contexto com a operadora e número do ofício correspondente
-        context["operadora"] = operadora
-        context["numero_oficio"] = numero_oficio
+    for identificador, valores in zip(identificadores_selecionados, valores_identificadores):
+        modelo_path = MODELOS[identificador]  # Seleciona o modelo correto
+        context[identificador] = "\n".join([f"  - {v.strip()}" for v in valores if v.strip()])  # Preenche o placeholder do identificador
 
-        # Caminho para salvar o DOCX preenchido
-        preenchido_path = f"oficio_{operadora}.docx"
-        preencher_modelo(TEMPLATE_PATH, context, preenchido_path)
-        arquivos_oficios.append(preenchido_path)
+        for operadora, numero_oficio in zip(operadoras, numeros_oficio):
+            # Atualizar contexto com operadora e número do ofício correspondente
+            context["operadora"] = operadora
+            context["numero_oficio"] = numero_oficio
+
+            # Caminho para salvar o DOCX preenchido
+            preenchido_path = f"oficio_{operadora}_{identificador}.docx"
+            preencher_modelo(modelo_path, context, preenchido_path)
+            arquivos_oficios.append(preenchido_path)
 
     return arquivos_oficios
 
 # Interface Streamlit
-st.title("Gerador de Ofícios Automáticos")
+st.title("Gerador de Ofícios")
 st.header("Preencha os dados abaixo para gerar os ofícios:")
 
 # Entradas do usuário
@@ -57,10 +65,18 @@ ano_atual = datetime.now().year
 tipo_referencia = st.selectbox("Tipo de Referência", ["IP", "VPI"])
 numero_referencia = st.text_input(f"Número do {tipo_referencia}", "12345")
 ano_referencia = st.text_input("Ano do IP/VPI", str(ano_atual))
-cpf = st.text_area("Lista de CPFs (um por linha)", "000.000.000-00")
 email = st.text_input("E-mail para Resposta", "delegado@exemplo.com")
 nome_delegado = st.text_input("Nome do Delegado", "Delegado Exemplo")
 nome_delegacia = st.text_input("Nome da Delegacia", "Delegacia Exemplo")
+
+# Identificadores
+st.subheader("Selecione os Identificadores:")
+identificadores_selecionados = st.multiselect("Identificadores", ["CPF", "IMEI", "TERMINAL"])
+
+valores_identificadores = []
+for identificador in identificadores_selecionados:
+    valores = st.text_area(f"Lista de {identificador}s (um por linha)", "")
+    valores_identificadores.append(valores.splitlines())
 
 # Data atual formatada
 data_atual = datetime.now()
@@ -75,28 +91,31 @@ if st.button("Gerar Ofícios"):
     # Criar o contexto para substituição
     context = {
         "ano_atual": str(ano_atual),
-        "data_atual": data_formatada,
+        "data_atual": data_atual.strftime("%d de %B de %Y"),
         "IP/VPI": tipo_referencia,
         "numero_ip_vpi": numero_referencia,
         "ano_ip_vpi": ano_referencia,
         "email_delegacia": email,
         "nome_delegado": nome_delegado,
-        "cpf_lista": "\n".join([f"  - {c.strip()}" for c in cpf.splitlines() if c.strip()]),
         "nome_delegacia": nome_delegacia,
+        # Inicializando os placeholders de identificadores
+        "CPF": "",
+        "IMEI": "",
+        "TERMINAL": ""
     }
 
     # Gerar os documentos e salvar caminhos
     numeros_oficio = [numero_oficio_vivo, numero_oficio_claro, numero_oficio_tim]
-    st.session_state.arquivos_gerados = gerar_oficios(context, numeros_oficio)
+    st.session_state.arquivos_gerados = gerar_oficios(context, numeros_oficio, identificadores_selecionados, valores_identificadores)
 
 # Mostrar botões de download para os arquivos gerados
 if st.session_state.arquivos_gerados:
     st.subheader("Baixar Ofícios Gerados:")
     for arquivo in st.session_state.arquivos_gerados:
-        operadora = arquivo.split('_')[1].split('.')[0]  # Extrair operadora do nome do arquivo
+        operadora_identificador = "_".join(arquivo.split('_')[1:3])  # Extrair operadora e identificador
         with open(arquivo, "rb") as docx_file:
             st.download_button(
-                label=f"Baixar Ofício - {operadora}",
+                label=f"Baixar Ofício - {operadora_identificador}",
                 data=docx_file,
                 file_name=arquivo,
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
